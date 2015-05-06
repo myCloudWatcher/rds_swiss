@@ -51,7 +51,7 @@ module SecurityGroupHoleController
         
         # wait a minute since the AWS documentation says that there can be a short delay in propagating security group changes
         Chef::Log.info("Waiting a little bit for security group rules to propagate...")
-        sleep 90
+        sleep 60
         Chef::Log.info("...Done waiting")
         true
       end
