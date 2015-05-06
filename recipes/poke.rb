@@ -5,6 +5,3 @@ aws_swiss node[:aws_swiss][:security_group] do
   enable                true
   fallback_group        node[:aws_swiss][:fallback_group] # May be nil
 end
-
-# wait a minute since the AWS documentation says that there can be a short delay in propagating security group changes
-sleep 60
