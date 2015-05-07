@@ -4,7 +4,7 @@ define :aws_swiss, \
   :cidr => nil, \
   :port => nil, \
   :enable => true, \
-  :fallback_group => nil \
+  :fallback_group => nil, \
   :dbhost => nil \
 do
 
