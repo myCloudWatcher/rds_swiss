@@ -113,12 +113,12 @@ module SecurityGroupHoleController
     end
   end
   
-  def self.open_rds_hole_with_fallback(security_group, fallback_group, cidr, region, aws_access_key_id, aws_secret_access_key)
-    if !open_rds_hole_if_necessary(security_group, cidr, region, aws_access_key_id, aws_secret_access_key)
+  def self.open_rds_hole_with_fallback(security_group, fallback_group, cidr, region, aws_access_key_id, aws_secret_access_key, dbhost)
+    if !open_rds_hole_if_necessary(security_group, cidr, region, aws_access_key_id, aws_secret_access_key, dbhost)
       # failed to poke hole in specified security group
       if !fallback_group.nil?
         Chef::Log.info("Trying to poke hole in fallback security group #{fallback_group}")
-        if !open_rds_hole_if_necessary(fallback_group, cidr, region, aws_access_key_id, aws_secret_access_key)
+        if !open_rds_hole_if_necessary(fallback_group, cidr, region, aws_access_key_id, aws_secret_access_key, dbhost)
           # failed fallback also
           raise "Failed to poke hole in fallback security group #{fallback_group}"
         end
