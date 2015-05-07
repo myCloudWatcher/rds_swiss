@@ -60,7 +60,7 @@ module SecurityGroupHoleController
     [ cidr_holes.include?(cidr), cidr_holes.size ]
   end
   
-  def self.open_rds_hole_if_necessary(security_group, cidr, region, aws_access_key_id, aws_secret_access_key)
+  def self.open_rds_hole_if_necessary(security_group, cidr, region, aws_access_key_id, aws_secret_access_key, dbhost)
     hole_exists, num_holes = detect_rds_hole(security_group, cidr, region, aws_access_key_id, aws_secret_access_key)
     if !hole_exists
       command_base = awscli_command_stem(region, aws_access_key_id, aws_secret_access_key)
@@ -77,7 +77,7 @@ module SecurityGroupHoleController
         # hole poked successfully
         Chef::Log.info("Successfully poked hole in RDS security group #{security_group} for cidr #{cidr}")
         Chef::Log.info("There are now #{num_holes+1} holes in the security group #{security_group}")
-        DBTester.test_db_connection( node[:gigi][:db_host] )
+        DBTester.test_db_connection( dbhost )
         true
       end
     else
