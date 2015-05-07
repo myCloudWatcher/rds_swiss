@@ -4,13 +4,15 @@ define :aws_swiss, \
   :cidr => nil, \
   :port => nil, \
   :enable => true, \
-  :fallback_group => nil \
+  :fallback_group => nil, \
+  :dbhost => nil \
 do
 
   security_group = params[:name]
   cidr = params[:cidr]
   port = params[:port]
   fallback_group = params[:fallback_group]
+  dbhost = params[:dbhost]
   
   if !port.nil?
     port = port.to_s
@@ -37,7 +39,7 @@ do
     if port.nil? # RDS security group
       ruby_block "authorize RDS ingress for #{target_name}" do
         block do
-          SecurityGroupHoleController.open_rds_hole_with_fallback(security_group, fallback_group, cidr, region, params[:aws_access_key_id], params[:aws_secret_access_key])
+          SecurityGroupHoleController.open_rds_hole_with_fallback(security_group, fallback_group, cidr, region, params[:aws_access_key_id], params[:aws_secret_access_key], dbhost)
         end
       end
     else # EC2 security group

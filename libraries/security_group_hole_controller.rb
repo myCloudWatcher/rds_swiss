@@ -1,3 +1,32 @@
+module DBTester
+  def DBTester.test_db_connection( dbhost )
+    require 'open3'
+    connectionerror = 1
+    attempt = 0
+    maxattempts = 8
+    while ( (connectionerror == 1) && ( ( maxattempts < 0 ) || ( attempt < maxattempts ) ) )
+      Chef::Log.info( "Testing web server's database connection to '" + dbhost + "'..." )
+      stdin, stdout, stderr, wait_thr = Open3.popen3( 'nc', '-w', '10', '-z', dbhost, '3306' )
+      stdout.gets(nil)
+      stdout.close
+      stderr.gets(nil)
+      stderr.close
+      exit_code = wait_thr.value
+      connectionerror = exit_code.exitstatus
+      if ( connectionerror == 1 )
+        Chef::Log.info( "Connection not ready yet.  Returned error of '" + connectionerror.to_s + "'.  Sleeping..." )
+        sleep( 30 )
+      end
+      attempt = attempt + 1
+    end
+    if ( connectionerror == 1 )
+      Chef::Log.info("Max attempts reached... giving up.")
+    else
+      Chef::Log.info("Connection okay!")
+    end
+  end
+end
+
 module SecurityGroupHoleController
   
   def self.awscli_command_stem(region, aws_access_key_id, aws_secret_access_key)
@@ -31,7 +60,7 @@ module SecurityGroupHoleController
     [ cidr_holes.include?(cidr), cidr_holes.size ]
   end
   
-  def self.open_rds_hole_if_necessary(security_group, cidr, region, aws_access_key_id, aws_secret_access_key)
+  def self.open_rds_hole_if_necessary(security_group, cidr, region, aws_access_key_id, aws_secret_access_key, dbhost)
     hole_exists, num_holes = detect_rds_hole(security_group, cidr, region, aws_access_key_id, aws_secret_access_key)
     if !hole_exists
       command_base = awscli_command_stem(region, aws_access_key_id, aws_secret_access_key)
@@ -48,6 +77,7 @@ module SecurityGroupHoleController
         # hole poked successfully
         Chef::Log.info("Successfully poked hole in RDS security group #{security_group} for cidr #{cidr}")
         Chef::Log.info("There are now #{num_holes+1} holes in the security group #{security_group}")
+        DBTester.test_db_connection( dbhost )
         true
       end
     else
@@ -83,12 +113,12 @@ module SecurityGroupHoleController
     end
   end
   
-  def self.open_rds_hole_with_fallback(security_group, fallback_group, cidr, region, aws_access_key_id, aws_secret_access_key)
-    if !open_rds_hole_if_necessary(security_group, cidr, region, aws_access_key_id, aws_secret_access_key)
+  def self.open_rds_hole_with_fallback(security_group, fallback_group, cidr, region, aws_access_key_id, aws_secret_access_key, dbhost)
+    if !open_rds_hole_if_necessary(security_group, cidr, region, aws_access_key_id, aws_secret_access_key, dbhost)
       # failed to poke hole in specified security group
       if !fallback_group.nil?
         Chef::Log.info("Trying to poke hole in fallback security group #{fallback_group}")
-        if !open_rds_hole_if_necessary(fallback_group, cidr, region, aws_access_key_id, aws_secret_access_key)
+        if !open_rds_hole_if_necessary(fallback_group, cidr, region, aws_access_key_id, aws_secret_access_key, dbhost)
           # failed fallback also
           raise "Failed to poke hole in fallback security group #{fallback_group}"
         end
