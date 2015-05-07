@@ -48,11 +48,6 @@ module SecurityGroupHoleController
         # hole poked successfully
         Chef::Log.info("Successfully poked hole in RDS security group #{security_group} for cidr #{cidr}")
         Chef::Log.info("There are now #{num_holes+1} holes in the security group #{security_group}")
-        
-        # wait a minute since the AWS documentation says that there can be a short delay in propagating security group changes
-        Chef::Log.info("Waiting a little bit for security group rules to propagate...")
-        sleep 120
-        Chef::Log.info("...Done waiting")
         true
       end
     else
